@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Site para Escrever Fofocas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+  @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+
+  :root {
+    --primary-color: #b22222;
+    --background-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-color: #eee;
+    --text-muted: #a0a0a0;
+    --spacing: 16px;
+    --border-radius: 12px;
+    --max-width: 800px;
+    --font-family: 'Inter', sans-serif;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--background-color);
+    color: var(--text-color);
+    font-family: var(--font-family);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--spacing);
+  }
+
+  header {
+    margin-bottom: var(--spacing);
+    text-align: center;
+  }
+
+  header h1 {
+    font-weight: 600;
+    font-size: 2rem;
+    color: var(--primary-color);
+    user-select: none;
+  }
+
+  main {
+    width: 100%;
+    max-width: var(--max-width);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing);
+  }
+
+  form {
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius);
+    padding: var(--spacing);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 0 10px rgba(178,34,34,0.5);
+  }
+
+  label {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+    max-height: 300px;
+    background-color: #2a2a2a;
+    color: var(--text-color);
+    border: none;
+    border-radius: var(--border-radius);
+    padding: 12px;
+    font-size: 1rem;
+    font-family: var(--font-family);
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.8);
+  }
+
+  textarea:focus {
+    outline: 2px solid var(--primary-color);
+    background-color: #3a1a1a;
+  }
+
+  button[type="submit"] {
+    align-self: flex-end;
+    background-color: var(--primary-color);
+    color: var(--text-color);
+    border: none;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 1rem;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.3s ease;
+  }
+
+  button[type="submit"]:hover,
+  button[type="submit"]:focus {
+    background-color: #a02020;
+  }
+
+  button[type="submit"] .material-icons {
+    font-size: 20px;
+  }
+
+  .gossip-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .gossip-card {
+    background-color: var(--card-bg);
+    padding: var(--spacing);
+    border-radius: var(--border-radius);
+    box-shadow: 0 0 15px rgba(178,34,34,0.3);
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+
+  .gossip-card time {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  @media (max-width: 480px) {
+    main {
+      padding: 0 var(--spacing);
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  a {
+    color: var(--primary-color);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Escreva sua Fofoca</h1>
+</header>
+<main>
+  <form id="gossipForm" aria-label="Formulário para escrever fofoca">
+    <label for="gossipInput">Digite aqui sua fofoca (qualquer pessoa pode escrever):</label>
+    <textarea id="gossipInput" name="gossipInput" placeholder="Escreva sua fofoca negativa ou engraçada..." required aria-required="true"></textarea>
+    <button type="submit" aria-label="Enviar Fofoca">
+      <span class="material-icons" aria-hidden="true">send</span> Enviar
+    </button>
+  </form>
+  <section aria-live="polite" aria-atomic="false" class="gossip-list" id="gossipList" tabindex="0" aria-label="Lista de fofocas enviadas">
+    <!-- Gossip posts appear here -->
+  </section>
+</main>
+
+<script>
+  (() => {
+    const form = document.getElementById('gossipForm');
+    const input = document.getElementById('gossipInput');
+    const gossipList = document.getElementById('gossipList');
+
+    // Load gossips from localStorage or empty array
+    const savedGossips = JSON.parse(localStorage.getItem('gossips')) || [];
+
+    function renderGossips() {
+      gossipList.innerHTML = '';
+
+      if (savedGossips.length === 0) {
+        const noGossip = document.createElement('p');
+        noGossip.textContent = 'Nenhuma fofoca ainda. Seja o primeiro a compartilhar!';
+        noGossip.style.color = 'var(--text-muted)';
+        gossipList.appendChild(noGossip);
+        return;
+      }
+
+      // Render newest first
+      savedGossips.slice().reverse().forEach(gossip => {
+        const card = document.createElement('article');
+        card.className = 'gossip-card';
+        card.tabIndex = 0;
+
+        const timeElem = document.createElement('time');
+        const date = new Date(gossip.date);
+        timeElem.dateTime = date.toISOString();
+        timeElem.textContent = date.toLocaleString('pt-BR');
+
+        const content = document.createElement('p');
+        content.textContent = gossip.content;
+
+        card.appendChild(timeElem);
+        card.appendChild(content);
+
+        gossipList.appendChild(card);
+      });
+    }
+
+    // Initial render
+    renderGossips();
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (text.length === 0) return;
+
+      // Add new gossip 
+      savedGossips.push({
+        content: text,
+        date: new Date().toISOString()
+      });
+
+      // Save to localStorage
+      localStorage.setItem('gossips', JSON.stringify(savedGossips));
+
+      // Clear input and re-render
+      input.value = '';
+      renderGossips();
+
+      // Focus input again
+      input.focus();
+    });
+  })();
+</script>
+</body>
+</html>
+
